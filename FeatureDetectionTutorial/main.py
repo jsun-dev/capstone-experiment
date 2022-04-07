@@ -3,8 +3,8 @@ import os
 
 path = 'Documents'
 images = []
-documentTypes = []
-files = os.listdir('Documents')
+documentTypes = ['No document detected']
+files = os.listdir(path)
 orb = cv2.ORB_create(nfeatures=1000)
 print('Total Documents Detected:', len(files))
 
@@ -27,7 +27,7 @@ def findID(img, desList, threshold):
     kp2, des2 = orb.detectAndCompute(img, None)
     bf = cv2.BFMatcher()
     matchList = []
-    finalID = -1
+    finalID = 0
     try:
         for des in desList:
             matches = bf.knnMatch(des, des2, k=2)
@@ -43,12 +43,13 @@ def findID(img, desList, threshold):
 
     if len(matchList) != 0:
         if max(matchList) > threshold:
-            finalID = matchList.index(max(matchList))
+            finalID = matchList.index(max(matchList)) + 1
     return finalID
 
 
 desList = findDes(images)
 
+# Webcam
 cap = cv2.VideoCapture(0)
 
 while True:
@@ -57,10 +58,7 @@ while True:
     img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
 
     id = findID(img2, desList, 10)
-    if id >= 0:
-        cv2.putText(imgOriginal, documentTypes[id], (50, 50), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 255))
-    else:
-        cv2.putText(imgOriginal, 'No document detected', (50, 50), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 255))
+    cv2.putText(imgOriginal, documentTypes[id], (50, 50), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 255))
 
     cv2.imshow('img2', imgOriginal)
     cv2.waitKey(1)
