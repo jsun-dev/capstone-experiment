@@ -20,6 +20,9 @@ def findDes(images):
     for img in images:
         kp, des = orb.detectAndCompute(img, None)
         desList.append(des)
+        imgKp = cv2.drawKeypoints(img, kp, None)
+        cv2.imshow('test', imgKp)
+        cv2.waitKey(0)
     return desList
 
 
@@ -48,6 +51,7 @@ def findID(img, desList, threshold):
 
 
 desList = findDes(images)
+print(desList)
 
 # Webcam
 cap = cv2.VideoCapture(0)
