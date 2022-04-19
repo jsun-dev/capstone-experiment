@@ -23,6 +23,7 @@ def valueTrackbars():
 
 # initializeTrackbars()
 
+# Read the image
 imgOriginal = cv2.imread('warp_test.jpg')
 imgOriginal = imutils.resize(imgOriginal, width=800)
 
@@ -30,16 +31,16 @@ imgOriginal = imutils.resize(imgOriginal, width=800)
 imgGray = cv2.cvtColor(imgOriginal, cv2.COLOR_BGR2GRAY)
 cols, rows = imgGray.shape
 brightness = np.sum(imgGray) / (255 * cols * rows)
-print(brightness)
+print('Brightness:', brightness)
 
 # thresh = valueTrackbars()
 # Linear equation of adjusted threshold based on brightness
-inBlackThresh = 300 * brightness + 10
-print(inBlackThresh)
+levelThreshold = 300 * brightness + 10
+print('Level Threshold:', levelThreshold)
 
 # Adjust the levels of the image
 # https://stackoverflow.com/a/60339950
-inBlack = np.array([inBlackThresh, inBlackThresh, inBlackThresh], dtype=np.float32)
+inBlack = np.array([levelThreshold, levelThreshold, levelThreshold], dtype=np.float32)
 inWhite = np.array([255, 255, 255], dtype=np.float32)
 inGamma = np.array([1.0, 1.0, 1.0], dtype=np.float32)
 outBlack = np.array([0, 0, 0], dtype=np.float32)
@@ -49,7 +50,7 @@ imgAdjusted = np.clip((imgOriginal - inBlack) / (inWhite - inBlack), 0, 255)
 imgAdjusted = (imgAdjusted ** (1 / inGamma)) * (outWhite - outBlack) + outBlack
 imgAdjusted = np.clip(imgAdjusted, 0, 255).astype(np.uint8)
 
-# Convert to adjusted image to grayscale
+# Convert adjusted image to grayscale
 imgAdjustedGray = cv2.cvtColor(imgAdjusted, cv2.COLOR_BGR2GRAY)
 
 # Denoise the image
@@ -57,7 +58,6 @@ imgDenoise = cv2.fastNlMeansDenoising(imgAdjustedGray, h=7)
 
 # Apply thresholding
 ret, imgThresh = cv2.threshold(imgDenoise, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-# ret, imgThresh = cv2.threshold(imgDenoise, 200, 255, cv2.THRESH_BINARY)
 
 # Apply morphological operations to erase unnecessary details
 kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
