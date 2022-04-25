@@ -36,3 +36,12 @@ INPUT_IMAGE_HEIGHT = 128
 
 # Define threshold to filter weak predictions
 THRESHOLD = 0.5
+
+# Define the path to the base output directory
+BASE_OUTPUT = 'output'
+
+# Define the path to the output serialized model, model training
+# plot, and testing image paths
+MODEL_PATH = os.path.join(BASE_OUTPUT, 'unet11_midv_2020.path')
+PLOT_PATH = os.path.sep.join([BASE_OUTPUT, 'plot.png'])
+TEST_PATHS = os.path.sep.join([BASE_OUTPUT, 'test_paths.txt'])
