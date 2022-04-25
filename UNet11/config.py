@@ -27,12 +27,12 @@ NUM_LEVELS = 3
 # HYPERPARAMETERS
 # Initialize learning rate, number of epochs, and batch size
 INIT_LR = 0.001
-NUM_EPOCHS = 20
+NUM_EPOCHS = 10
 BATCH_SIZE = 16
 
 # Define the input image dimensions
-INPUT_IMAGE_WIDTH = 128
-INPUT_IMAGE_HEIGHT = 128
+INPUT_IMAGE_WIDTH = 256
+INPUT_IMAGE_HEIGHT = 256
 
 # Define threshold to filter weak predictions
 THRESHOLD = 0.5
