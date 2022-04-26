@@ -1,6 +1,3 @@
-# USAGE
-# python train.py
-
 # Import necessary packages
 from dataset import SegmentationDataset
 from ternausnet.models import UNet11
@@ -84,6 +81,7 @@ if __name__ == '__main__':
 
         # Loop over the training set
         for (i, (x, y)) in enumerate(trainLoader):
+            print('Epoch ', e + 1, ': ', i + 1, '/', len(trainLoader), sep='')
             # Send the input to the device
             (x, y) = (x.to(config.DEVICE), y.to(config.DEVICE))
 
