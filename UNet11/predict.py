@@ -27,17 +27,17 @@ def prepare_plot(origImage, origMask, predMask, imgClosing, imgContours):
     ax[4].set_title("Simplified Contour")
 
     # Set the layout of the figure and display it
-    figure.tight_layout()
-    figure.show()
-    figure.waitforbuttonpress()
+    # figure.tight_layout()
+    # figure.show()
+    # figure.waitforbuttonpress()
 
-    # cv2.imshow('original', origImage)
-    # cv2.imshow('originalMask', origMask)
-    # cv2.imshow('predictedMask', predMask)
-    # cv2.imshow('morphology', imgClosing)
+    cv2.imshow('original', origImage)
+    cv2.imshow('originalMask', origMask)
+    cv2.imshow('predictedMask', predMask)
+    cv2.imshow('morphology', imgClosing)
     # # cv2.imshow('canny', imgCanny)
-    # cv2.imshow('contours', imgContours)
-    # cv2.waitKey(0)
+    cv2.imshow('contours', imgContours)
+    cv2.waitKey(0)
 
 
 def make_predictions(model, imagePath):
@@ -90,9 +90,11 @@ def make_predictions(model, imagePath):
         predMask = cv2.resize(predMask, (gtMaskCopy.shape[1], gtMaskCopy.shape[0]))
 
         # Resize all images to a smaller dimension
-        imageCopy = imutils.resize(imageCopy, height=500)
-        gtMaskCopy = imutils.resize(gtMaskCopy, height=500)
-        predMask = imutils.resize(predMask, height=500)
+        imageCopy = imutils.resize(imageCopy, height=1000)
+        gtMaskCopy = imutils.resize(gtMaskCopy, height=1000)
+        predMask = imutils.resize(predMask, height=1000)
+
+        imageCopy = cv2.cvtColor(imageCopy, cv2.COLOR_BGR2RGB)
 
         #######################
         # PROCESSING MASK
@@ -103,11 +105,6 @@ def make_predictions(model, imagePath):
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
         imgOpening = cv2.morphologyEx(predMaskCopy, cv2.MORPH_OPEN, kernel, iterations=1)
         imgClosing = cv2.morphologyEx(imgOpening, cv2.MORPH_CLOSE, kernel, iterations=3)
-
-        # Apply Canny edge detection
-        highThresh, thresh = cv2.threshold(imgClosing, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        lowThresh = 0.5 * highThresh
-        imgCanny = cv2.Canny(imgClosing, lowThresh, highThresh)
 
         # Find all contours
         imgContours = np.zeros(imageCopy.shape, dtype=np.uint8)
@@ -126,7 +123,7 @@ def make_predictions(model, imagePath):
             print("largest contour has ", len(biggestContour), "points")
 
             hull = cv2.convexHull(biggestContour)
-            cv2.drawContours(imgContours, [hull], 0, (255, 255, 255), 3)
+            cv2.drawContours(imgContours, [hull], 0, (255, 255, 255), 1)
             print("convex hull has ", len(hull), "points")
 
             # epsilon = cv2.arcLength(biggestContour, True)
@@ -134,10 +131,36 @@ def make_predictions(model, imagePath):
             # cv2.drawContours(imgContours, [approx], 0, (255, 255, 255), 2)
             # print("simplified contour has", len(approx), "points")
 
+        # Apply Canny edge detection
+        imgContours = cv2.cvtColor(imgContours, cv2.COLOR_BGR2GRAY)
+        # highThresh, thresh = cv2.threshold(imgContours, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        # lowThresh = 0.5 * highThresh
+        imgCanny = cv2.Canny(imgContours, 50, 150, apertureSize=3)
+
+        lines = cv2.HoughLines(imgCanny, 2, np.pi / 360, 100)
+        if lines is not None:
+            for i in range(0, len(lines)):
+                rho = lines[i][0][0]
+                theta = lines[i][0][1]
+                a = math.cos(theta)
+                b = math.sin(theta)
+                x0 = a * rho
+                y0 = b * rho
+                pt1 = (int(x0 + 3000 * (-b)), int(y0 + 3000 * a))
+                pt2 = (int(x0 - 3000 * (-b)), int(y0 - 3000 * a))
+                cv2.line(imageCopy, pt1, pt2, (0, 0, 255), 1, cv2.LINE_AA)
+
         gtMaskCopy = cv2.cvtColor(gtMaskCopy, cv2.COLOR_BGR2RGB)
         predMask = cv2.cvtColor(predMask, cv2.COLOR_BGR2RGB)
         imgClosing = cv2.cvtColor(imgClosing, cv2.COLOR_BGR2RGB)
-        imgCanny = cv2.cvtColor(imgCanny, cv2.COLOR_BGR2RGB)
+        imgCanny = cv2.cvtColor(imgCanny, cv2.COLOR_GRAY2RGB)
+
+        # Resize the images for visualization
+        imageCopy = imutils.resize(imageCopy, height=700)
+        gtMaskCopy = imutils.resize(gtMaskCopy, height=700)
+        predMask = imutils.resize(predMask, height=700)
+        imgClosing = imutils.resize(imgClosing, height=700)
+        imgCanny = imutils.resize(imgCanny, height=700)
 
 
         # Cast the masks to float data type
@@ -145,17 +168,17 @@ def make_predictions(model, imagePath):
         # predMask = predMask.astype("float32") / 255.0
 
         # Prepare a plot for visualization
-        prepare_plot(imageCopy, gtMaskCopy, predMask, imgClosing, imgContours)
+        prepare_plot(imageCopy, gtMaskCopy, predMask, imgClosing, imgCanny)
 
 
 # Load the image paths in our testing file and randomly select 10 image paths
 print("[INFO] Loading up test image paths...")
 imagePaths = open(config.TEST_PATHS).read().strip().split("\n")
 # imagePaths = imagePaths[140:149]
-# imagePaths = ['grc_passport_21.jpg', 'lva_passport_26.jpg', 'grc_passport_27.jpg', 'aze_passport_39.jpg',
-#               'lva_passport_21.jpg', 'lva_passport_17.jpg', 'alb_id_39.jpg', 'svk_id_36.jpg', 'lva_passport_35.jpg',
-#               'grc_passport_28.jpg', 'srb_passport_23.jpg', 'srb_passport_16.jpg', 'esp_id_47.jpg']
-imagePaths = np.random.choice(imagePaths, size=10)
+imagePaths = ['grc_passport_21.jpg', 'lva_passport_26.jpg', 'grc_passport_27.jpg', 'aze_passport_39.jpg',
+              'lva_passport_21.jpg', 'lva_passport_17.jpg', 'alb_id_39.jpg', 'svk_id_36.jpg', 'lva_passport_35.jpg',
+              'grc_passport_28.jpg', 'srb_passport_23.jpg', 'srb_passport_16.jpg', 'esp_id_47.jpg']
+# imagePaths = np.random.choice(imagePaths, size=10)
 
 # Load our model from disk and flash it to the current device
 print("[INFO] Load up model...")
@@ -167,5 +190,5 @@ unet = torch.load('output/unet11_model_1/unet11_midv_2020_1e-3_10_16_256_persona
 for path in imagePaths:
     # print(path)
     # Make predictions and visualize the results
-    make_predictions(unet, path)
-    # make_predictions(unet, 'dataset\\train\images\\' + path)
+    # make_predictions(unet, path)
+    make_predictions(unet, 'dataset\\train\images\\' + path)
